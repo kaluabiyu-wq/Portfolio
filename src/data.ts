@@ -5,10 +5,10 @@ export const PROFILE = {
   email: 'kaluabiyu@gmail.com',
   githubUser: 'kaluabiyu-wq',
   cv: '/Kalu-Abiyu-Cv.pdf', 
-  photo: '/kalu.JPG', 
+  photo: '/kalu.jpg', 
 };
 
-export const NAV = ['About', 'Projects', 'Skills', 'Education', 'Contact'];
+export const NAV = ['About', 'Projects', 'Skills', 'Hire','Education', 'Contact'];
 
 export const FACTS = [
   { icon: '🎓', title: 'BSc Computer Science', a: 'Admas University', b: 'Computer Science · 2022–2026', accent: false },
@@ -82,10 +82,10 @@ export const TIMELINE: { icon: string; kind: string; title: string; date: string
     desc: 'Core studies in algorithms, data structures, software engineering, databases, and computer networks.' },
   { icon: '📜', kind: 'Certification · freeCodeCamp', title: 'JavaScript Algorithms and Data Structures', date: 'Oct 19, 2025 · ~300 hours',
     desc: 'Developer certification covering JavaScript fundamentals, algorithms, data structures, and problem solving.',
-    link: 'https://freecodecamp.org/certification/fcc04c481c8-0b7a-4447-87d3-dba5778c261b/javascript-algorithms-and-data-structures-v8' },
+    link: 'https://freecodecamp.org/certification/kalu-abiyu/javascript-algorithms-and-data-structures-v8' },
   { icon: '📜', kind: 'Certification · freeCodeCamp', title: 'Responsive Web Design', date: 'Mar 5, 2024 · ~300 hours',
     desc: 'Developer certification covering HTML, CSS, Flexbox, Grid, and building responsive, accessible layouts.',
-    link: 'https://freecodecamp.org/certification/fcc04c481c8-0b7a-4447-87d3-dba5778c261b/responsive-web-design' },
+    link: 'https://freecodecamp.org/certification/kalu-abiyu/responsive-web-design' },
 ];
 
 export const SOCIALS = [
@@ -98,7 +98,7 @@ export const SOCIALS = [
 
 // "What I'm looking for" rows. Edit the values to match your situation.
 export const HIRE = [
-  { label: 'Role', value: 'Junior Fullstack Developer (.NET + Angular)' },
+  { label: 'Role', value: 'Fullstack Developer (.NET + Angular)' },
   { label: 'Work mode', value: 'Remote · Hybrid · Onsite' },
   { label: 'Location', value: 'Addis Ababa, Ethiopia (UTC+3)' },
   { label: 'Relocation', value: 'Open to relocation' },
