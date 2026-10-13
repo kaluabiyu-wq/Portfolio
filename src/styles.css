@@ -130,8 +130,7 @@ footer em{font-style:normal;color:var(--primary)}
 .vlink{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--accent-text);text-decoration:underline;text-underline-offset:3px}
 .vlink:hover{color:var(--text)}
 button:disabled{opacity:.6;cursor:wait}
-@media(max-width:900px){.hire{display:grid;grid-template-columns:1.2fr 1fr;gap:56px;align-items:start}
-.looking{margin-top:24px;border-top:1px solid var(--line)}
+.hire{display:grid;grid-template-columns:1.2fr 1fr;gap:56px;align-items:start}
 .looking div{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
 .looking dt{flex:0 0 120px;font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:3px}
 .looking dd{font-weight:500}
