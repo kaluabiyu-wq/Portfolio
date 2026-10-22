@@ -23,6 +23,7 @@ export interface Project {
   demo?: string;         
   image?: string;        
   github: string;       
+  team?: boolean;        // built with a team (drives the "Team" filter)
 }
 export const PROJECTS: Project[] = [
   {
@@ -88,6 +89,7 @@ export const PROJECTS: Project[] = [
       'An admin role, seeded on startup, can manage users, jobs, and applications through a dedicated API and Angular pages.',
     ],
     github: 'https://github.com/Qiyas-Hackathon/SkillBridge',
+    team: true,
   },
 ];
 

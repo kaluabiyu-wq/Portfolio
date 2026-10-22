@@ -39,6 +39,51 @@ function useActiveSection(ids: string[]) {
   return active;
 }
 
+interface Repo {
+  name: string; description: string | null; language: string | null;
+  pushed_at: string; html_url: string; stargazers_count: number;
+}
+
+/** Latest non-fork repos from the public GitHub API. Cached for an hour per tab; fails silently. */
+function useRecentRepos(user: string) {
+  const [repos, setRepos] = useState<Repo[]>([]);
+  useEffect(() => {
+    const key = `gh-repos:${user}`;
+    try {
+      const hit = sessionStorage.getItem(key);
+      if (hit) {
+        const { t, d } = JSON.parse(hit) as { t: number; d: Repo[] };
+        if (Date.now() - t < 60 * 60 * 1000) { setRepos(d); return; }
+      }
+    } catch { /* storage unavailable or corrupt: fall through to fetch */ }
+    const ctl = new AbortController();
+    fetch(`https://api.github.com/users/${user}/repos?sort=pushed&per_page=12`, {
+      signal: ctl.signal, headers: { Accept: 'application/vnd.github+json' },
+    })
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json() as Promise<(Repo & { fork: boolean })[]>; })
+      .then(all => {
+        const top = all.filter(r => !r.fork).slice(0, 6).map(r => ({
+          name: r.name, description: r.description, language: r.language,
+          pushed_at: r.pushed_at, html_url: r.html_url, stargazers_count: r.stargazers_count,
+        }));
+        setRepos(top);
+        try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), d: top })); } catch { /* ignore */ }
+      })
+      .catch(() => { /* rate-limited or offline: the panel simply stays hidden */ });
+    return () => ctl.abort();
+  }, [user]);
+  return repos;
+}
+
+function timeAgo(iso: string) {
+  const days = (Date.parse(iso) - Date.now()) / 86_400_000;
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  if (Math.abs(days) < 1) return 'today';
+  if (Math.abs(days) < 30) return rtf.format(Math.round(days), 'day');
+  if (Math.abs(days) < 365) return rtf.format(Math.round(days / 30), 'month');
+  return rtf.format(Math.round(days / 365), 'year');
+}
+
 /* ---------- components ---------- */
 const SECTION_IDS = NAV.map(n => n.toLowerCase());
 
@@ -100,7 +145,7 @@ function About() {
           <div className="tag">ABOUT</div>
           <h2>Building systems that <span className="grad">work end-to-end.</span></h2>
           <p>I'm a Computer Science student at Admas University and a participant in the Qiyas Fullstack Program — a hands-on training program focused on production-grade .NET and Angular development.</p>
-          <p>My focus is on building complete, well-structured systems: clean backend architecture, reactive frontends, proper testing, and real deployment. Both of my major projects go deeper than tutorials — they solve actual problems with real architectural decisions.</p>
+          <p>My focus is on building complete, well-structured systems: clean backend architecture, reactive frontends, proper testing, and real deployment. My major projects go deeper than tutorials — they solve actual problems with real architectural decisions, and one of them was built with a six-person team at the Qiyas Hackathon.</p>
           <p>I'm actively looking for a junior fullstack role where I can contribute to a real product from day one.</p>
         </div>
         <div className="facts">
@@ -168,16 +213,32 @@ function ProjectCard({ p, onOpen }: { p: Project; onOpen: () => void }) {
   );
 }
 
+const FILTERS = ['All', 'Fullstack', 'Mobile', 'Team'] as const;
+type Filter = (typeof FILTERS)[number];
+const matchesFilter = (p: Project, f: Filter) =>
+  f === 'All' || (f === 'Team' ? !!p.team : p.badge.includes(f));
+
+
+
 function Projects() {
   const [open, setOpen] = useState<Project | null>(null);
+  const [filter, setFilter] = useState<Filter>('All');
+  const shown = PROJECTS.filter(p => matchesFilter(p, filter));
   return (
     <section id="projects" className="alt">
       <div className="wrap">
         <div className="tag">PROJECTS</div>
         <h2>Real systems, real architecture.</h2>
         <p className="lead">Selected full-stack and cross-platform applications built with thoughtful architecture. Open a case study to see the problem, my role, and the decisions behind each one.</p>
-        <div className="grid3">{PROJECTS.map(p => <ProjectCard key={p.title} p={p} onOpen={() => setOpen(p)} />)}</div>
+        <div className="filters" role="group" aria-label="Filter projects">
+          {FILTERS.map(f => (
+            <button key={f} type="button" className={filter === f ? 'on' : ''} aria-pressed={filter === f} onClick={() => setFilter(f)}>{f}</button>
+          ))}
+          <span className="count" role="status">{shown.length} of {PROJECTS.length} projects</span>
+        </div>
+        <div className="grid3">{shown.map(p => <ProjectCard key={p.title} p={p} onOpen={() => setOpen(p)} />)}</div>
         {open && <CaseStudy p={open} onClose={() => setOpen(null)} />}
+        
       </div>
     </section>
   );
@@ -303,6 +364,33 @@ function ContactForm() {
   );
 }
 
+function CopyEmail() {
+  const [done, setDone] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(PROFILE.email);
+      setDone(true);
+      setTimeout(() => setDone(false), 2000);
+    } catch {
+      window.prompt('Copy my email address:', PROFILE.email);
+    }
+  };
+  return <button type="button" className="btn g" onClick={copy}>{done ? 'Copied ✓' : 'Copy email'}</button>;
+}
+
+function BackToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const on = () => setShow(window.scrollY > 600);
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, []);
+  if (!show) return null;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return <button type="button" className="totop" aria-label="Back to top" onClick={() => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })}>↑</button>;
+}
+
 function Contact() {
   return (
     <section id="contact" className="alt">
@@ -313,6 +401,7 @@ function Contact() {
           <p className="lead">I'm actively looking for junior fullstack roles. If you'd like to see a project walkthrough, discuss an opportunity, or just connect — my inbox is open.</p>
           <div className="btns">
             <a className="btn p" href={`mailto:${PROFILE.email}`}>Send Email</a>
+            <CopyEmail />
             <a className="btn g" href={PROFILE.cv} download>Download CV</a>
           </div>
           <div className="socials">
@@ -343,6 +432,7 @@ export default function App() {
         <Education />
         <Contact />
       </main>
+      <BackToTop />
       <footer>© {new Date().getFullYear()} <em>{PROFILE.name}</em> · Built with React + TypeScript</footer>
     </>
   );

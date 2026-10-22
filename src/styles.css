@@ -64,7 +64,7 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:5
 .fact small.c1{color:var(--text)}.fact small.c2{color:var(--accent-text)}
 
 /* projects */
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px;margin-top:24px}
 .proj{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s}
 .proj:hover{border-color:var(--accent)}
 .thumb{height:170px;position:relative;display:flex;align-items:flex-end;padding:12px;background:linear-gradient(135deg,#2C3F5F,#1B2A41);font-family:var(--mono);font-weight:500;font-size:14px;color:#fff}
@@ -118,7 +118,7 @@ footer em{font-style:normal;color:var(--primary)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
 
 @media(max-width:900px){
-  .grid3{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}
+  .grid4{grid-template-columns:1fr 1fr}
   .hero .wrap,.about,.contact{grid-template-columns:1fr}
   .photo{justify-self:start;width:220px}
   .links{position:absolute;top:56px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);border-bottom:1px solid var(--line);display:none}
@@ -158,3 +158,24 @@ dialog.case::backdrop{background:rgba(27,42,65,.65)}
 .case .btns{margin-top:26px}
 .case .x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--text);cursor:pointer}
 @media(max-width:900px){.resume{display:none}}
+
+/* project filters */
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:32px}
+.filters button{font-family:var(--mono);font-size:12px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer}
+.filters button:hover{border-color:var(--text);color:var(--text)}
+.filters button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:500}
+.filters .count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* github activity */
+.ghact{margin-top:56px}
+.ghact h3{font-size:18px;font-weight:600;margin-bottom:16px}
+.ghact ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.ghact a{display:flex;flex-direction:column;gap:4px;height:100%;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--card);transition:border-color .2s}
+.ghact a:hover{border-color:var(--accent)}
+.ghact b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent-text)}
+.ghact span{font-size:13px;color:var(--muted);flex:1}
+.ghact small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* back to top */
+.totop{position:fixed;right:20px;bottom:20px;z-index:40;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:18px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.totop:hover{border-color:var(--accent);color:var(--accent-text)}
