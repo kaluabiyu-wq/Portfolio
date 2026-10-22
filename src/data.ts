@@ -1,4 +1,3 @@
-
 export const PROFILE = {
   name: 'Kalu Abiyu',
   role: 'Fullstack .NET + Angular Developer',
@@ -12,7 +11,7 @@ export const NAV = ['About', 'Projects', 'Skills', 'Hire','Education', 'Contact'
 
 export const FACTS = [
   { icon: '🎓', title: 'BSc Computer Science', a: 'Admas University', b: 'Computer Science · 2022–2026', accent: false },
-  { icon: '⚡', title: 'Qiyas Fullstack Program', a: 'Mar 2026 – Sep 2026', b: 'Production-grade .NET + Angular', accent: true },
+  { icon: '⚡', title: 'Qiyas Fullstack Program', a: 'Mar 2026 – Present', b: 'Production-grade .NET + Angular', accent: true },
   { icon: '📍', title: 'Addis Ababa, Ethiopia', a: 'Available for remote · Hybrid · Onsite', b: 'UTC+3 · Open to relocation', accent: false },
 ];
 
@@ -28,29 +27,36 @@ export interface Project {
 export const PROJECTS: Project[] = [
   {
     short: 'TMS', badge: 'Fullstack', title: 'Training Management System',
-    desc: 'Full-stack system for scheduling, tracking, and managing employee training programs with real-time notifications and state-driven UI.',
-    tech: ['ASP.NET Core 10', 'Angular 17', 'Clean Architecture', 'CQRS / MediatR', 'SignalR'],
+    desc: 'Full-stack system for scheduling, tracking, and managing training programs and enrollments, with real-time notifications, JWT authentication, and a zoneless Angular client backed by Vitest and Playwright tests.',
+    tech: ['ASP.NET Core 10', 'EF Core + PostgreSQL', 'Angular 22', 'Clean Architecture', 'CQRS / MediatR', 'SignalR', 'JWT Auth', 'NgRx SignalStore', 'Vitest + Playwright'],
     role: 'Fullstack developer: backend, frontend, and testing',
     problem: 'Organizations need one place to schedule, track, and manage employee training programs, and to tell people as things change.',
     decisions: [
       'Clean Architecture keeps domain rules independent of the UI and the database.',
       'CQRS with MediatR keeps each use case small, separate, and easy to test.',
       'SignalR pushes training updates to users in real time instead of making them refresh.',
+      'JWT Bearer auth with refresh token rotation and resource-based policies keeps access rules out of controllers.',
+      'A zoneless Angular client with signals and NgRx SignalStore keeps state changes explicit and cheap to track.',
+    ],
+    results: [
+      'Layered API (Domain / Application / Infrastructure / Api) with versioned REST endpoints and RFC 9457 ProblemDetails errors.',
+      'Playwright E2E suite covering a happy-path enrollment approval and a forced-500 failure path, plus Vitest component and store specs.',
     ],
     github: 'https://github.com/kaluabiyu-wq/TmsApi',
   },
   {
     short: 'PMAFS', badge: 'Fullstack', title: 'Pharmacy Medicine Availability Finder',
-    desc: 'Helps patients in Addis Ababa locate pharmacies that have a specific medicine in stock right now, with role-specific dashboards for admins, pharmacists, and the public.',
-    tech: ['ASP.NET Core', 'Angular', 'Clean Architecture', 'Role-based Auth', 'Geolocation API'],
+    desc: 'Helps patients in Addis Ababa locate pharmacies that have a specific medicine in stock right now, with prices, a stock-reliability ranking, and role-based access for patients, pharmacy staff, and admins.',
+    tech: ['ASP.NET Core', 'EF Core + PostgreSQL', 'Clean Architecture', 'Role-based Auth', 'TypeScript', 'Angular'],
     role: 'Fullstack developer: backend, frontend, and testing',
     problem: 'Patients in Addis Ababa need to know which pharmacies have a specific medicine in stock right now.',
     decisions: [
       'Role-based authorization gives admins, pharmacists, and the public separate dashboards and permissions.',
       'Clean Architecture separates pharmacy and medicine rules from the delivery layer.',
-      'The Geolocation API supports location-based searching.',
+      'Pharmacies and users carry a Location record (subcity, woreda, coordinates) so searches can be location-aware.',
+      'Every price change is written to an InventoryHistory table, giving an audit trail of who changed what and when.',
     ],
-    github: 'https://github.com/kaluabiyu-wq',
+    github: 'https://github.com/kaluabiyu-wq/PMFApi',
   },
   {
     short: 'Mini-Market', badge: 'Mobile', title: 'Mini-Market',
@@ -68,16 +74,16 @@ export const PROJECTS: Project[] = [
 ];
 
 export const SKILLS = [
-  { title: 'Backend', items: ['C# (.NET)', 'ASP.NET Core', 'Entity Framework Core', 'Clean Architecture', 'CQRS / MediatR', 'SignalR', 'JWT Auth', 'REST APIs', 'SQL Server', 'Minimal APIs'] },
-  { title: 'Frontend', items: ['Angular', 'TypeScript', 'NgRx SignalStore', 'RxJS', 'HTML / CSS', 'Tailwind CSS', 'Angular Material', 'Reactive Forms'] },
-  { title: 'Testing', items: ['Vitest', 'Playwright', 'xUnit', 'Integration Testing', 'E2E Testing'] },
+  { title: 'Backend', items: ['C# (.NET)', 'ASP.NET Core', 'Entity Framework Core', 'Clean Architecture', 'CQRS / MediatR', 'SignalR', 'JWT Auth', 'REST APIs', 'PostgreSQL', 'FluentValidation', 'Minimal APIs'] },
+  { title: 'Frontend', items: ['Angular 22', 'TypeScript', 'Signals', 'NgRx SignalStore', 'RxJS', 'HTML / CSS', 'Tailwind CSS', 'Angular Material', 'Reactive Forms'] },
+  { title: 'Testing', items: ['Vitest', 'Playwright', 'HttpTestingController', 'xUnit', 'Integration Testing', 'E2E Testing'] },
   { title: 'Tools', items: ['Git / GitHub', 'Docker', 'VS Code', 'Visual Studio', 'Postman', 'Azure DevOps', 'Linux CLI'] },
   { title: 'Mobile', items: ['Flutter', 'Dart', 'BLoC', 'go_router'] },
 ];
 
 export const TIMELINE: { icon: string; kind: string; title: string; date: string; desc: string; link?: string }[] = [
-  { icon: '⚡', kind: 'Professional Training', title: 'Qiyas Fullstack Program', date: 'Mar 2026 – Sep 2026',
-    desc: 'Hands-on fullstack training program covering production-grade ASP.NET Core, Angular, Clean Architecture, and real project delivery.' },
+  { icon: '⚡', kind: 'Professional Training', title: 'Qiyas Fullstack Program', date: 'Mar 2026 – Present',
+    desc: 'Hands-on fullstack training program covering C# / .NET 10, ASP.NET Core, EF Core with PostgreSQL, Angular, Clean Architecture, auth hardening, and Vitest + Playwright testing, delivered through a continuous capstone project.' },
   { icon: '🎓', kind: 'BSc Degree', title: 'BSc Computer Science', date: 'Admas University · 2022–2026',
     desc: 'Core studies in algorithms, data structures, software engineering, databases, and computer networks.' },
   { icon: '📜', kind: 'Certification · freeCodeCamp', title: 'JavaScript Algorithms and Data Structures', date: 'Oct 19, 2025 · ~300 hours',
