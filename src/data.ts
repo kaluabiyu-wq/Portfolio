@@ -71,10 +71,28 @@ export const PROJECTS: Project[] = [
     ],
     github: 'https://github.com/kaluabiyu-wq',
   },
+  {
+    short: 'SkillBridge', badge: 'Team · Fullstack', title: 'SkillBridge',
+    desc: 'A job marketplace built by a six-person team at the Qiyas Hackathon, connecting candidates with employers through skill-tagged jobs, applications with status tracking, and an admin console.',
+    tech: ['ASP.NET Core 10', 'EF Core + PostgreSQL', 'ASP.NET Core Identity', 'JWT Auth', 'CQRS / MediatR', 'FluentValidation', 'Angular 22'],
+    role: 'Backend developer on a team of six (Team 23): authentication, authorization, and API design alongside three other backend developers and three frontend developers',
+    problem: 'Candidates need a place to show their skills and apply for jobs, and employers need to post jobs, review applicants, and move them through a hiring pipeline.',
+    decisions: [
+      'A layered Domain / Application / Infrastructure / API solution keeps business rules independent of EF Core and the web layer.',
+      'MediatR commands and handlers, with a FluentValidation pipeline behavior, keep each use case small and validate every request before it runs.',
+      'ASP.NET Core Identity with JWT Bearer tokens and role-based authorization separates what Candidates, Employers, and Admins can do.',
+      'Skills are modeled as a many-to-many relationship, so both candidates and jobs can reference the same skill records.',
+    ],
+    results: [
+      'Candidates can apply to jobs and track their applications; employers can review applicants and update each application status.',
+      'An admin role, seeded on startup, can manage users, jobs, and applications through a dedicated API and Angular pages.',
+    ],
+    github: 'https://github.com/Qiyas-Hackathon/SkillBridge',
+  },
 ];
 
 export const SKILLS = [
-  { title: 'Backend', items: ['C# (.NET)', 'ASP.NET Core', 'Entity Framework Core', 'Clean Architecture', 'CQRS / MediatR', 'SignalR', 'JWT Auth', 'REST APIs', 'PostgreSQL', 'FluentValidation', 'Minimal APIs'] },
+  { title: 'Backend', items: ['C# (.NET)', 'ASP.NET Core', 'Entity Framework Core', 'Clean Architecture', 'CQRS / MediatR', 'SignalR', 'JWT Auth', 'REST APIs', 'ASP.NET Core Identity', 'PostgreSQL', 'FluentValidation', 'Minimal APIs'] },
   { title: 'Frontend', items: ['Angular 22', 'TypeScript', 'Signals', 'NgRx SignalStore', 'RxJS', 'HTML / CSS', 'Tailwind CSS', 'Angular Material', 'Reactive Forms'] },
   { title: 'Testing', items: ['Vitest', 'Playwright', 'HttpTestingController', 'xUnit', 'Integration Testing', 'E2E Testing'] },
   { title: 'Tools', items: ['Git / GitHub', 'Docker', 'VS Code', 'Visual Studio', 'Postman', 'Azure DevOps', 'Linux CLI'] },
