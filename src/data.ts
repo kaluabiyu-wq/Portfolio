@@ -3,7 +3,7 @@ export const PROFILE = {
   role: 'Fullstack .NET + Angular Developer',
   email: 'kaluabiyu@gmail.com',
   githubUser: 'kaluabiyu-wq',
-  cv: '/Kalu-Abiyu-Cv.pdf', 
+  cv: '/Kalu-Abiyu-Cv1.pdf', 
   photo: '/kalu.jpg', 
 };
 
