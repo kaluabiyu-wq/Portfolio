@@ -4,7 +4,7 @@ export const PROFILE = {
   email: 'kaluabiyu@gmail.com',
   githubUser: 'kaluabiyu-wq',
   cv: '/Kalu-Abiyu-Cv1.pdf', 
-  photo: '/kalu.jpg', 
+  photo: '/kalu.JPG', 
 };
 
 export const NAV = ['About', 'Projects', 'Skills', 'Hire','Education', 'Contact'];
