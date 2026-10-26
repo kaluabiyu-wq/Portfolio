@@ -1,6 +1,6 @@
 export const PROFILE = {
   name: 'Kalu Abiyu',
-  role: 'Fullstack .NET + Angular Developer',
+  role: 'Fullstack Developer',
   email: 'kaluabiyu@gmail.com',
   githubUser: 'kaluabiyu-wq',
   cv: '/Kalu-Abiyu-Cv1.pdf', 
