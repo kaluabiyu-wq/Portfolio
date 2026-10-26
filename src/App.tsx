@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, TIMELINE, SOCIALS, type Project } from './data';
-
+import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
 type Theme = 'light' | 'dark';
 
 /* ---------- hooks ---------- */
@@ -254,7 +253,25 @@ function Skills() {
           {SKILLS.map(s => (
             <div className="skill" key={s.title}>
               <h4>{s.title}</h4>
-              <div className="chips">{s.items.map(i => <span key={i}>{i}</span>)}</div>
+              <div className="badges">
+                {s.items.map(name => {
+                  const ic = SKILL_ICONS[name];
+                  return (
+                    <span
+                      key={name}
+                      className="skill-badge"
+                      style={{ background: ic?.bg, color: ic?.text }}
+                    >
+                      {ic?.d && (
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill={ic.icon} aria-hidden="true">
+                          <path d={ic.d} />
+                        </svg>
+                      )}
+                      {name}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
@@ -433,7 +450,7 @@ export default function App() {
         <Contact />
       </main>
       <BackToTop />
-      <footer>© {new Date().getFullYear()} <em>{PROFILE.name}</em> · Built with React + TypeScript</footer>
+      <footer>© {new Date().getFullYear()} <em>{PROFILE.name}</em></footer>
     </>
   );
 }
