@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
 type Theme = 'light' | 'dark';
 
@@ -72,6 +72,47 @@ function useRecentRepos(user: string) {
     return () => ctl.abort();
   }, [user]);
   return repos;
+}
+
+/* ---------- shareable case-study links (#case/<slug>) ---------- */
+const CASE_PREFIX = '#case/';
+const projectSlug = (p: Project) => p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const caseUrl = (p: Project) => `${location.origin}${location.pathname}${CASE_PREFIX}${projectSlug(p)}`;
+
+function projectFromHash(): Project | null {
+  if (!location.hash.startsWith(CASE_PREFIX)) return null;
+  try {
+    const slug = decodeURIComponent(location.hash.slice(CASE_PREFIX.length));
+    return PROJECTS.find(p => projectSlug(p) === slug) ?? null;
+  } catch { return null; } // malformed %-escape in a hand-edited URL
+}
+
+/** Case-study state that lives in the URL: deep links open the modal, Back/Forward close and reopen it. */
+function useCaseRoute() {
+  const [open, setOpenState] = useState<Project | null>(projectFromHash);
+
+  const setOpen = useCallback((p: Project | null) => {
+    setOpenState(p);
+    if (p) history.pushState(null, '', `${CASE_PREFIX}${projectSlug(p)}`);
+    else if (location.hash.startsWith(CASE_PREFIX)) history.replaceState(null, '', location.pathname + location.search);
+  }, []);
+
+  useEffect(() => {
+    const sync = () => setOpenState(projectFromHash());
+    window.addEventListener('hashchange', sync);
+    // Landing on a deep link: put the Projects section behind the modal so closing it lands somewhere sensible.
+    if (projectFromHash()) document.getElementById('projects')?.scrollIntoView();
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.title;
+    document.title = `${open.title} · ${PROFILE.name}`;
+    return () => { document.title = prev; };
+  }, [open]);
+
+  return [open, setOpen] as const;
 }
 
 function timeAgo(iso: string) {
@@ -170,7 +211,17 @@ function About() {
 
 function CaseStudy({ p, onClose }: { p: Project; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [copied, setCopied] = useState(false);
   useEffect(() => { ref.current?.showModal(); }, []);
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(caseUrl(p));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt('Copy this link:', caseUrl(p));
+    }
+  };
   const list = (title: string, items?: string[]) =>
     items && items.length > 0 && (<><h4>{title}</h4><ul>{items.map(i => <li key={i}>{i}</li>)}</ul></>);
   return (
@@ -189,6 +240,7 @@ function CaseStudy({ p, onClose }: { p: Project; onClose: () => void }) {
       <div className="btns">
         {p.demo && <a className="btn p" href={p.demo} target="_blank" rel="noreferrer">Live demo ↗</a>}
         <a className="btn g" href={p.github} target="_blank" rel="noreferrer">Source code ↗</a>
+        <button type="button" className="btn g" onClick={copyLink}>{copied ? 'Link copied ✓' : 'Copy link'}</button>
       </div>
     </dialog>
   );
@@ -501,7 +553,7 @@ function CommandPalette({ commands, onClose }: { commands: Command[]; onClose: (
 export default function App() {
   const [theme, toggleTheme] = useTheme();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [caseOpen, setCaseOpen] = useState<Project | null>(null);
+  const [caseOpen, setCaseOpen] = useCaseRoute();
 
   // Ctrl/Cmd+K toggles the palette from anywhere on the page.
   useEffect(() => {
@@ -533,7 +585,7 @@ export default function App() {
       { id: 'gh', group: 'Links', label: 'GitHub', hint: '↗', run: open(social('GitHub')) },
       { id: 'li', group: 'Links', label: 'LinkedIn', hint: '↗', run: open(social('LinkedIn')) },
     ];
-  }, [theme, toggleTheme]);
+  }, [theme, toggleTheme, setCaseOpen]);
 
   return (
     <>

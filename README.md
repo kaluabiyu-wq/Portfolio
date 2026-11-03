@@ -9,7 +9,7 @@ components.
 ![Screenshot of the portfolio](public/projects/portfolio-home.webp)
 
 ## Features
-Dark/light theme that follows the system setting, case-study modal built on the
+Dark/light theme that follows the system setting, case-study modal with shareable deep links (`/#case/<project-slug>`, Back button supported) built on the
 native `<dialog>` element, contact form delivered through FormSubmit, JSON-LD
 structured data, optional Plausible analytics.
 
