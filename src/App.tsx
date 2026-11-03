@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
 type Theme = 'light' | 'dark';
 
@@ -86,8 +86,9 @@ function timeAgo(iso: string) {
 /* ---------- components ---------- */
 const SECTION_IDS = NAV.map(n => n.toLowerCase());
 
-function Navbar() {
-  const [theme, toggleTheme] = useTheme();
+const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent);
+
+function Navbar({ theme, toggleTheme, onSearch }: { theme: Theme; toggleTheme: () => void; onSearch: () => void }) {
   const [open, setOpen] = useState(false);
   const active = useActiveSection(SECTION_IDS);
   return (
@@ -100,6 +101,9 @@ function Navbar() {
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button type="button" className="kbd-btn" onClick={onSearch} aria-label="Search and quick actions" aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}>
+            <span aria-hidden="true">⌕</span><kbd>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+          </button>
           <a className="resume" href={PROFILE.cv} download>Resume</a>
           <button id="theme" onClick={toggleTheme} aria-label="Toggle theme">{theme === 'dark' ? '☀' : '☾'}</button>
           <button className="menu" onClick={() => setOpen(o => !o)} aria-label="Menu">☰</button>
@@ -219,8 +223,7 @@ const matchesFilter = (p: Project, f: Filter) =>
 
 
 
-function Projects() {
-  const [open, setOpen] = useState<Project | null>(null);
+function Projects({ open, setOpen }: { open: Project | null; setOpen: (p: Project | null) => void }) {
   const [filter, setFilter] = useState<Filter>('All');
   const shown = PROJECTS.filter(p => matchesFilter(p, filter));
   return (
@@ -435,21 +438,118 @@ function Contact() {
   );
 }
 
+
+/* ---------- command palette ---------- */
+interface Command { id: string; group: string; label: string; hint?: string; keywords?: string; run: () => void; }
+
+function CommandPalette({ commands, onClose }: { commands: Command[]; onClose: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const listId = useId();
+  const [q, setQ] = useState('');
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { ref.current?.showModal(); }, []);
+
+  const results = useMemo(() => {
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return commands;
+    return commands.filter(c => {
+      const hay = `${c.label} ${c.group} ${c.keywords ?? ''}`.toLowerCase();
+      return terms.every(t => hay.includes(t));
+    });
+  }, [q, commands]);
+
+  useEffect(() => { setIdx(0); }, [q]);
+  useEffect(() => { document.getElementById(`${listId}-${idx}`)?.scrollIntoView({ block: 'nearest' }); }, [idx, listId]);
+
+  const run = (c?: Command) => { if (!c) return; onClose(); c.run(); };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setIdx(i => Math.min(i + 1, results.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setIdx(i => Math.max(i - 1, 0)); }
+    else if (e.key === 'Enter') { e.preventDefault(); run(results[idx]); }
+  };
+
+  let lastGroup = '';
+  return (
+    <dialog ref={ref} className="palette" aria-label="Quick actions" onClose={onClose}
+      onClick={e => { if (e.target === ref.current) onClose(); }}>
+      <input
+        autoFocus type="text" value={q} onChange={e => setQ(e.target.value)} onKeyDown={onKey}
+        placeholder="Jump to a section, open a case study, grab my CV…"
+        role="combobox" aria-expanded="true" aria-controls={listId} aria-autocomplete="list"
+        aria-activedescendant={results[idx] ? `${listId}-${idx}` : undefined} aria-label="Search commands"
+      />
+      <ul id={listId} role="listbox" aria-label="Results">
+        {results.map((c, i) => {
+          const header = c.group !== lastGroup ? (lastGroup = c.group) : null;
+          return (
+            <li key={c.id} role="presentation">
+              {header && <div className="pgroup" aria-hidden="true">{header}</div>}
+              <div id={`${listId}-${i}`} role="option" aria-selected={i === idx}
+                className={i === idx ? 'on' : ''} onMouseMove={() => setIdx(i)} onClick={() => run(c)}>
+                <span>{c.label}</span>{c.hint && <small>{c.hint}</small>}
+              </div>
+            </li>
+          );
+        })}
+        {results.length === 0 && <li role="presentation" className="pempty">No matches for “{q}”.</li>}
+      </ul>
+      <div className="pfoot" aria-hidden="true"><span>↑↓ navigate</span><span>↵ select</span><span>esc close</span></div>
+    </dialog>
+  );
+}
+
 export default function App() {
+  const [theme, toggleTheme] = useTheme();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [caseOpen, setCaseOpen] = useState<Project | null>(null);
+
+  // Ctrl/Cmd+K toggles the palette from anywhere on the page.
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen(o => !o); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const commands = useMemo<Command[]>(() => {
+    const social = (label: string) => SOCIALS.find(s => s.label === label)?.href;
+    const open = (href?: string) => () => { if (href) window.open(href, '_blank', 'noopener'); };
+    const copyEmail = async () => {
+      try { await navigator.clipboard.writeText(PROFILE.email); }
+      catch { window.prompt('Copy my email address:', PROFILE.email); }
+    };
+    const downloadCv = () => {
+      const a = document.createElement('a');
+      a.href = PROFILE.cv; a.download = ''; document.body.appendChild(a); a.click(); a.remove();
+    };
+    return [
+      ...NAV.map(n => ({ id: `go-${n}`, group: 'Go to', label: n, hint: `#${n.toLowerCase()}`, run: () => { location.hash = n.toLowerCase(); } })),
+      ...PROJECTS.map(p => ({ id: `proj-${p.title}`, group: 'Case studies', label: p.title, hint: p.badge, keywords: `${p.short} ${p.tech.join(' ')}`, run: () => setCaseOpen(p) })),
+      { id: 'cv', group: 'Actions', label: 'Download CV', hint: 'PDF', keywords: 'resume', run: downloadCv },
+      { id: 'mail', group: 'Actions', label: 'Send an email', hint: PROFILE.email, keywords: 'contact hire', run: () => { location.href = `mailto:${PROFILE.email}`; } },
+      { id: 'copy', group: 'Actions', label: 'Copy email address', run: copyEmail },
+      { id: 'theme', group: 'Actions', label: `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`, keywords: 'dark light mode', run: toggleTheme },
+      { id: 'gh', group: 'Links', label: 'GitHub', hint: '↗', run: open(social('GitHub')) },
+      { id: 'li', group: 'Links', label: 'LinkedIn', hint: '↗', run: open(social('LinkedIn')) },
+    ];
+  }, [theme, toggleTheme]);
+
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
-      <Navbar />
+      <Navbar theme={theme} toggleTheme={toggleTheme} onSearch={() => setPaletteOpen(true)} />
       <Hero />
       <main id="main">
         <About />
-        <Projects />
+        <Projects open={caseOpen} setOpen={setCaseOpen} />
         <Skills />
         <Hire />
         <Education />
         <Contact />
       </main>
       <BackToTop />
+      {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
       <footer>© {new Date().getFullYear()} <em>{PROFILE.name}</em></footer>
     </>
   );

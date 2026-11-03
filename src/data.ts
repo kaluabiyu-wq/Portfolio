@@ -3,7 +3,7 @@ export const PROFILE = {
   role: 'Fullstack Developer',
   email: 'kaluabiyu@gmail.com',
   githubUser: 'kaluabiyu-wq',
-  cv: '/Kalu-Abiyu-Cv1.pdf', 
+  cv: '/Kalu_Abiyu_CV1.pdf',
   photo: '/kalu.JPG', 
 };
 
