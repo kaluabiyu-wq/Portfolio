@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
+import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, NOW, type Project } from './data';
+import { Reveal, useTilt, useParallax, CountUp, ScrollProgress, CursorGlow, LocalTime } from './fx';
 type Theme = 'light' | 'dark';
 
 /* ---------- hooks ---------- */
@@ -154,15 +155,22 @@ function Navbar({ theme, toggleTheme, onSearch }: { theme: Theme; toggleTheme: (
   );
 }
 
+/** Splits a word into per-letter spans so the hero title can animate in. Hidden from screen readers (the h1 carries the label). */
+function Letters({ text, offset = 0 }: { text: string; offset?: number }) {
+  return <>{[...text].map((c, i) => <span key={i} className="ch" aria-hidden="true" style={{ '--i': i + offset } as CSSProperties}>{c}</span>)}</>;
+}
+
 function Hero() {
   const typed = useTyped(PROFILE.role);
   const [first, last] = PROFILE.name.split(' ');
+  const stage = useParallax<HTMLDivElement>();
   return (
     <header className="hero" id="home">
+      <div className="aurora" aria-hidden="true"><i /><i /><i /></div>
       <div className="wrap">
         <div>
           <div className="tag">HELLO, I'M</div>
-          <h1>{first} <span className="grad">{last}</span></h1>
+          <h1 aria-label={PROFILE.name}><Letters text={first} /> <span className="grad"><Letters text={last} offset={first.length + 1} /></span></h1>
           <div className="role"><span>{typed}</span><i /></div>
           <p className="lead">I build real, end-to-end systems — from clean domain models to reactive Angular UIs — and I'm looking for my first junior fullstack role.</p>
           <div className="btns">
@@ -170,11 +178,18 @@ function Hero() {
             <a className="btn g" href="#contact">Contact Me</a>
           </div>
         </div>
-        <div className="photo">
-          <div className="frame">
-            {PROFILE.photo ? <img src={PROFILE.photo} alt={PROFILE.name} /> : 'KA'}
+        <div className="photo" ref={stage}>
+          <div className="halo" aria-hidden="true" />
+          <div className="stage">
+            <div className="frame">
+              {PROFILE.photo ? <img src={PROFILE.photo} alt={PROFILE.name} /> : 'KA'}
+            </div>
+            <div className="status">Open to opportunities</div>
           </div>
-          <div className="status">Open to opportunities</div>
+          <span className="orb o1" aria-hidden="true"><SkillBadge name=".NET" /></span>
+          <span className="orb o2" aria-hidden="true"><SkillBadge name="Angular" /></span>
+          <span className="orb o3" aria-hidden="true"><SkillBadge name="PostgreSQL" /></span>
+          <span className="orb o4" aria-hidden="true"><SkillBadge name="TypeScript" /></span>
         </div>
       </div>
     </header>
@@ -185,23 +200,35 @@ function About() {
   return (
     <section id="about">
       <div className="wrap about">
-        <div>
+        <Reveal from="left">
           <div className="tag">ABOUT</div>
           <h2>Building systems that <span className="grad">work end-to-end.</span></h2>
           <p>I'm a Computer Science student at Admas University and a participant in the Qiyas Fullstack Program — a hands-on training program focused on production-grade .NET and Angular development.</p>
           <p>My focus is on building complete, well-structured systems: clean backend architecture, reactive frontends, proper testing, and real deployment. My major projects go deeper than tutorials — they solve actual problems with real architectural decisions, and one of them was built with a six-person team at the Qiyas Hackathon.</p>
           <p>I'm actively looking for a junior fullstack role where I can contribute to a real product from day one.</p>
-        </div>
+        </Reveal>
         <div className="facts">
-          {FACTS.map(f => (
-            <div className="fact" key={f.title}>
-              <div className="ic">{f.icon}</div>
+          <Reveal from="right">
+            <a className="fact now" href={NOW.href} target="_blank" rel="noreferrer">
+              <div className="ic" aria-hidden="true">🔨</div>
               <div>
-                <h4>{f.title}</h4>
-                <small className={f.accent ? 'c2' : 'c1'}>{f.a}</small>
-                <small>{f.b}</small>
+                <h4>Currently building: {NOW.title}</h4>
+                <small className="c2">{NOW.text}</small>
+                <small>View on GitHub ↗</small>
               </div>
-            </div>
+            </a>
+          </Reveal>
+          {FACTS.map((f, i) => (
+            <Reveal key={f.title} delay={i * 120} from="right">
+              <div className="fact">
+                <div className="ic">{f.icon}</div>
+                <div>
+                  <h4>{f.title}</h4>
+                  <small className={f.accent ? 'c2' : 'c1'}>{f.a}</small>
+                  <small>{f.b}</small>
+                </div>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -247,10 +274,16 @@ function CaseStudy({ p, onClose }: { p: Project; onClose: () => void }) {
 }
 
 function ProjectCard({ p, onOpen }: { p: Project; onOpen: () => void }) {
+  const tilt = useTilt<HTMLElement>();
   return (
-    <article className="proj">
+    <article className="proj tilt" ref={tilt}>
       <div className="thumb">
-        {p.image ? <img src={p.image} alt={`${p.title} screenshot`} loading="lazy" /> : p.short}
+        {p.image ? <img src={p.image} alt={`${p.title} screenshot`} loading="lazy" /> : (
+          <div className="mock" aria-hidden="true">
+            <div className="bar"><i /><i /><i /><span>{p.short.toLowerCase()}.app</span></div>
+            <div className="body"><b>{p.short}</b><s /><s /><s /></div>
+          </div>
+        )}
         <span className="badge">{p.badge}</span>
       </div>
       <div className="pbody">
@@ -268,6 +301,27 @@ function ProjectCard({ p, onOpen }: { p: Project; onOpen: () => void }) {
   );
 }
 
+/** Live "Latest on GitHub" strip from the public API; hidden if offline or rate-limited. */
+function RecentRepos() {
+  const repos = useRecentRepos(PROFILE.githubUser);
+  const shown = repos.filter(r => !PROJECTS.some(p => p.github.toLowerCase().endsWith(`/${r.name.toLowerCase()}`))).slice(0, 3);
+  if (shown.length === 0) return null;
+  return (
+    <Reveal className="repos-wrap">
+      <h3 className="repos-title">Latest on GitHub <small>live from my profile</small></h3>
+      <div className="repos">
+        {shown.map(r => (
+          <a key={r.name} className="repo" href={r.html_url} target="_blank" rel="noreferrer">
+            <b>{r.name}</b>
+            <p>{r.description ?? 'No description yet.'}</p>
+            <small>{r.language && <span>● {r.language}</span>}<span>Updated {timeAgo(r.pushed_at)}</span>{r.stargazers_count > 0 && <span>★ {r.stargazers_count}</span>}</small>
+          </a>
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
 const FILTERS = ['All', 'Fullstack', 'Mobile', 'Team'] as const;
 type Filter = (typeof FILTERS)[number];
 const matchesFilter = (p: Project, f: Filter) =>
@@ -281,20 +335,48 @@ function Projects({ open, setOpen }: { open: Project | null; setOpen: (p: Projec
   return (
     <section id="projects" className="alt">
       <div className="wrap">
-        <div className="tag">PROJECTS</div>
-        <h2>Real systems, real architecture.</h2>
-        <p className="lead">Selected full-stack and cross-platform applications built with thoughtful architecture. Open a case study to see the problem, my role, and the decisions behind each one.</p>
+        <Reveal>
+          <div className="tag">PROJECTS</div>
+          <h2>Real systems, real architecture.</h2>
+          <p className="lead">Selected full-stack and cross-platform applications built with thoughtful architecture. Open a case study to see the problem, my role, and the decisions behind each one.</p>
+        </Reveal>
         <div className="filters" role="group" aria-label="Filter projects">
           {FILTERS.map(f => (
             <button key={f} type="button" className={filter === f ? 'on' : ''} aria-pressed={filter === f} onClick={() => setFilter(f)}>{f}</button>
           ))}
           <span className="count" role="status">{shown.length} of {PROJECTS.length} projects</span>
         </div>
-        <div className="grid3">{shown.map(p => <ProjectCard key={p.title} p={p} onOpen={() => setOpen(p)} />)}</div>
+        <div className="grid3">{shown.map((p, i) => <Reveal key={p.title} delay={i * 90} className="cell"><ProjectCard p={p} onOpen={() => setOpen(p)} /></Reveal>)}</div>
         {open && <CaseStudy p={open} onClose={() => setOpen(null)} />}
-        
+        <RecentRepos />
       </div>
     </section>
+  );
+}
+
+function SkillBadge({ name }: { name: string }) {
+  const ic = SKILL_ICONS[name];
+  return (
+    <span className="skill-badge" style={{ background: ic?.bg, color: ic?.text }}>
+      {ic?.d && (
+        <svg viewBox="0 0 24 24" width="14" height="14" fill={ic.icon} aria-hidden="true">
+          <path d={ic.d} />
+        </svg>
+      )}
+      {name}
+    </span>
+  );
+}
+
+/** Decorative scrolling strip of the stack (the Skills section below is the accessible version). */
+function Marquee() {
+  const names = useMemo(() => [...new Set(SKILLS.flatMap(s => s.items))], []);
+  return (
+    <div className="marquee" aria-hidden="true">
+      <div className="track">
+        {[0, 1].map(k => <div className="set" key={k}>{names.map(n => <SkillBadge key={`${k}-${n}`} name={n} />)}</div>)}
+      </div>
+    </div>
   );
 }
 
@@ -302,32 +384,18 @@ function Skills() {
   return (
     <section id="skills">
       <div className="wrap">
-        <div className="tag">SKILLS</div>
-        <h2>The stack I work with.</h2>
+        <Reveal><div className="tag">SKILLS</div>
+        <h2>The stack I work with.</h2></Reveal>
         <div className="grid4">
-          {SKILLS.map(s => (
-            <div className="skill" key={s.title}>
-              <h4>{s.title}</h4>
-              <div className="badges">
-                {s.items.map(name => {
-                  const ic = SKILL_ICONS[name];
-                  return (
-                    <span
-                      key={name}
-                      className="skill-badge"
-                      style={{ background: ic?.bg, color: ic?.text }}
-                    >
-                      {ic?.d && (
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill={ic.icon} aria-hidden="true">
-                          <path d={ic.d} />
-                        </svg>
-                      )}
-                      {name}
-                    </span>
-                  );
-                })}
+          {SKILLS.map((s, i) => (
+            <Reveal key={s.title} delay={i * 90} from="zoom">
+              <div className="skill">
+                <h4>{s.title}</h4>
+                <div className="badges">
+                  {s.items.map(name => <SkillBadge key={name} name={name} />)}
+                </div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -348,6 +416,7 @@ function Hire() {
           <div className="tag">HIRE ME</div>
           <h2>What I'm looking for.</h2>
           <p className="lead">The quick facts recruiters and hiring managers ask for first.</p>
+          <LocalTime zone="Africa/Addis_Ababa" city="Addis Ababa" utcOffsetMin={180} />
           <dl className="looking">
             {HIRE.map(h => <div key={h.label}><dt>{h.label}</dt><dd>{h.value}</dd></div>)}
           </dl>
@@ -357,7 +426,7 @@ function Hire() {
           </div>
         </div>
         <div className="stats">
-          {stats.map(x => <div className="stat" key={x.label}><b>{x.n}</b><span>{x.label}</span></div>)}
+          {stats.map((x, i) => <Reveal key={x.label} delay={i * 120} from="right"><div className="stat"><CountUp to={x.n} /><span>{x.label}</span></div></Reveal>)}
         </div>
       </div>
     </section>
@@ -368,11 +437,11 @@ function Education() {
   return (
     <section id="education">
       <div className="wrap">
-        <div className="tag">EDUCATION</div>
-        <h2>Background &amp; Training</h2>
+        <Reveal><div className="tag">EDUCATION</div>
+        <h2>Background &amp; Training</h2></Reveal>
         <div className="tl">
-          {TIMELINE.map(t => (
-            <div className="item" key={t.title}>
+          {TIMELINE.map((t, i) => (
+            <Reveal key={t.title} delay={i * 110} from="left" className="tl-row"><div className="item">
               <div className="dot">{t.icon}</div>
               <div>
                 <span className="pill">{t.kind}</span>
@@ -381,7 +450,7 @@ function Education() {
                 <p>{t.desc}</p>
                 {t.link && <a className="vlink" href={t.link} target="_blank" rel="noreferrer">Verify certificate ↗</a>}
               </div>
-            </div>
+            </div></Reveal>
           ))}
         </div>
       </div>
@@ -590,8 +659,11 @@ export default function App() {
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
+      <ScrollProgress />
+      <CursorGlow />
       <Navbar theme={theme} toggleTheme={toggleTheme} onSearch={() => setPaletteOpen(true)} />
       <Hero />
+      <Marquee />
       <main id="main">
         <About />
         <Projects open={caseOpen} setOpen={setCaseOpen} />

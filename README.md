@@ -9,6 +9,11 @@ components.
 ![Screenshot of the portfolio](public/projects/portfolio-home.webp)
 
 ## Features
+Animated 2D hero (aurora background, rotating halo ring, floating tech badges that follow the mouse),
+scroll-reveal animations, 3D-tilt project cards, animated counters, tech marquee, scroll progress bar,
+cursor spotlight, live Addis Ababa clock, "currently building" card, and a live "Latest on GitHub" strip.
+All motion is switched off for visitors who prefer reduced motion.
+
 Dark/light theme that follows the system setting, case-study modal with shareable deep links (`/#case/<project-slug>`, Back button supported) built on the
 native `<dialog>` element, contact form delivered through FormSubmit, JSON-LD
 structured data, optional Plausible analytics.

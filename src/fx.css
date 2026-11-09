@@ -1,0 +1,176 @@
+/* ===== Motion & 3D layer =====
+   Everything here is progressive enhancement: with reduced motion (or no JS/WebGL)
+   the page renders as the plain static design in styles.css. */
+
+/* ---- scroll progress + cursor spotlight ---- */
+.progress{
+  position:fixed;top:0;left:0;right:0;height:3px;z-index:60;
+  background:linear-gradient(90deg,var(--accent),#7fb4ff);
+  transform-origin:0 50%;transform:scaleX(0);pointer-events:none;
+}
+.glow{
+  position:fixed;top:0;left:0;width:520px;height:520px;z-index:40;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,107,94,.13),transparent 70%);
+  will-change:transform;
+}
+:root[data-theme="dark"] .glow{background:radial-gradient(closest-side,rgba(255,138,127,.12),transparent 70%)}
+
+/* ---- 2D hero: aurora background, spinning halo, floating tech orbs ---- */
+.aurora{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+.aurora::before{content:"";position:absolute;inset:0;opacity:.5;
+  background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:26px 26px}
+.aurora i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;animation:drift 18s ease-in-out infinite alternate}
+.aurora i:nth-child(1){width:420px;height:420px;background:rgba(255,107,94,.35);right:8%;top:12%}
+.aurora i:nth-child(2){width:360px;height:360px;background:rgba(127,180,255,.28);right:22%;bottom:4%;animation-delay:-6s}
+.aurora i:nth-child(3){width:300px;height:300px;background:rgba(255,107,94,.18);left:-4%;top:30%;animation-delay:-11s}
+:root[data-theme="dark"] .aurora i{opacity:.4}
+@keyframes drift{to{transform:translate3d(40px,-30px,0) scale(1.15)}}
+.hero .wrap{z-index:1}
+
+.photo{--px:0;--py:0}
+.photo .stage{position:relative;transform:translate3d(calc(var(--px) * -8px),calc(var(--py) * -8px),0);transition:transform .25s ease-out}
+@property --a{syntax:"<angle>";initial-value:0deg;inherits:false}
+.photo .halo{position:absolute;inset:-16px;border-radius:30px;z-index:0;padding:3px;
+  background:conic-gradient(from var(--a),var(--accent),#7fb4ff,transparent 35%,transparent 55%,var(--accent-h),var(--accent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  mask-composite:exclude;animation:spin 6s linear infinite}
+@keyframes spin{to{--a:360deg}}
+.photo .frame{animation:float 6s ease-in-out infinite;position:relative;z-index:1}
+.photo .frame::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);
+  transform:translateX(-120%);animation:sheen 5.5s ease-in-out 1.6s infinite;
+}
+.photo .status{z-index:2}
+.orb{position:absolute;z-index:3;
+  transform:translate3d(calc(var(--px) * var(--k,14) * 1px),calc(var(--py) * var(--k,14) * 1px),0);transition:transform .3s ease-out}
+.orb .skill-badge{box-shadow:0 10px 24px -10px rgba(0,0,0,.45);animation:bob 5s ease-in-out infinite}
+.orb.o1{top:6%;left:-44px;--k:22}
+.orb.o2{top:30%;right:-34px;--k:-18}.orb.o2 .skill-badge{animation-delay:-1.5s}
+.orb.o3{bottom:20%;left:-60px;--k:16}.orb.o3 .skill-badge{animation-delay:-3s}
+.orb.o4{bottom:-14px;right:-8px;--k:-24}.orb.o4 .skill-badge{animation-delay:-2s}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes float{50%{transform:translateY(-10px)}}
+@keyframes sheen{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+/* ---- hero title: letters rise one after another ---- */
+.hero h1 .ch{
+  display:inline-block;
+  animation:letter .7s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay:calc(var(--i) * 45ms + .15s);
+}
+@keyframes letter{from{opacity:0;transform:translateY(.55em) rotateX(-70deg);filter:blur(6px)}}
+
+/* ---- tech marquee ---- */
+.marquee{
+  position:relative;overflow:hidden;padding:18px 0;
+  border-block:1px solid var(--line);background:var(--bg2);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+}
+.marquee .track{display:flex;width:max-content;animation:marquee 38s linear infinite}
+.marquee:hover .track{animation-play-state:paused}
+.marquee .set{display:flex;gap:12px;padding-right:12px}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* ---- scroll reveal ---- */
+.reveal{opacity:0;transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d,0ms);will-change:opacity,transform}
+.reveal.from-up{transform:translateY(28px)}
+.reveal.from-left{transform:translateX(-32px)}
+.reveal.from-right{transform:translateX(32px)}
+.reveal.from-zoom{transform:scale(.92) translateY(16px)}
+.reveal.in{opacity:1;transform:none;will-change:auto}
+.cell{display:flex}
+.cell>.proj{flex:1;min-width:0}
+
+/* ---- 3D tilt cards ---- */
+.grid3{perspective:1200px}
+.proj.tilt{
+  position:relative;
+  transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .5s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .3s;
+}
+.proj.tilt.tilting{transition:transform .08s linear,border-color .2s,box-shadow .3s}
+.proj.tilt:hover{box-shadow:0 22px 50px -18px rgba(27,42,65,.35),0 0 0 1px var(--accent)}
+:root[data-theme="dark"] .proj.tilt:hover{box-shadow:0 22px 50px -18px rgba(0,0,0,.7),0 0 0 1px var(--accent)}
+.proj.tilt::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .3s;
+  background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.16),transparent 60%);
+}
+.proj.tilt:hover::after{opacity:1}
+.proj .thumb img{transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.proj:hover .thumb img{transform:scale(1.06)}
+
+/* ---- small lifts on other cards ---- */
+.fact,.skill,.stat{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.fact:hover,.skill:hover,.stat:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 14px 30px -16px rgba(27,42,65,.3)}
+.skill-badge{transition:transform .2s ease}
+.skill-badge:hover{transform:translateY(-2px) scale(1.05)}
+
+/* ---- timeline: a line that connects the dots ---- */
+.tl{position:relative}
+.tl::before{
+  content:"";position:absolute;left:16px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(var(--accent),transparent);opacity:.45;
+}
+.tl .dot{position:relative;background:var(--bg);z-index:1}
+.reveal.in .dot{animation:pulse 2.4s ease-out 1s 2}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,94,.5)}100%{box-shadow:0 0 0 14px rgba(255,107,94,0)}}
+
+/* ---- buttons ---- */
+.btn.p{position:relative;overflow:hidden;transition:background .2s,transform .2s,box-shadow .2s}
+.btn.p:hover{transform:translateY(-2px);box-shadow:0 10px 24px -10px var(--accent)}
+.btn.g{transition:background .2s,border-color .2s,transform .2s}
+.btn.g:hover{transform:translateY(-2px)}
+
+/* ---- phones ---- */
+@media (max-width:900px){
+  .photo .halo{inset:-18px}
+  .orb.o1{left:-10px}.orb.o3{left:-14px}.orb.o2{right:-10px}.orb.o4{right:-4px}
+  .photo .frame{animation-duration:7s}
+  .tl::before{left:16px}
+}
+@media (max-width:520px){
+  .marquee .track{animation-duration:30s}
+}
+
+/* ---- reduced motion: show everything, move nothing ---- */
+@media (prefers-reduced-motion:reduce){
+  .reveal,.reveal.from-up,.reveal.from-left,.reveal.from-right,.reveal.from-zoom{opacity:1;transform:none;transition:none}
+  .marquee .track{animation:none}
+  .proj.tilt{transform:none}
+  .aurora i,.photo .halo,.orb .skill-badge,.photo .frame{animation:none}
+}
+
+/* ---- now-building card, local clock, GitHub repos, project mock thumbnails ---- */
+a.fact.now{border-style:dashed;border-color:var(--accent)}
+a.fact.now small.c2{white-space:normal;line-height:1.5;margin:2px 0 4px}
+.clock{display:inline-flex;gap:12px;align-items:center;margin-top:18px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.clock b{font-size:20px}.clock span{color:var(--muted);font-size:14px}
+.clock small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.dotlive{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.dotlive.on{background:var(--green);animation:pulse 2s ease-out infinite}
+
+.repos-wrap{margin-top:56px}
+.repos-title{font-size:18px;font-weight:700}
+.repos-title small{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--muted);margin-left:8px}
+.repos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
+.repo{display:block;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--card);transition:transform .25s,border-color .25s}
+.repo:hover{transform:translateY(-4px);border-color:var(--accent)}
+.repo b{font-family:var(--mono);font-size:14px;color:var(--accent-text)}
+.repo p{font-size:13px;color:var(--muted);margin:6px 0 12px}
+.repo small{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+.thumb .mock{position:absolute;inset:0;display:flex;flex-direction:column}
+.mock .bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:rgba(255,255,255,.08)}
+.mock .bar i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
+.mock .bar i:first-child{background:#ff6b5e}
+.mock .bar span{margin-left:8px;font-size:10px;opacity:.6}
+.mock .body{flex:1;padding:14px;display:flex;flex-direction:column;gap:8px;justify-content:center;
+  background:radial-gradient(240px 120px at 80% 0,rgba(255,107,94,.25),transparent)}
+.mock .body b{font-size:26px;letter-spacing:-.02em}
+.mock .body s{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.14);text-decoration:none}
+.mock .body s:nth-of-type(1){width:70%}.mock .body s:nth-of-type(2){width:50%}.mock .body s:nth-of-type(3){width:62%}
+.thumb .badge{z-index:1}
