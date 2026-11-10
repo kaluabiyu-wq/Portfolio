@@ -199,9 +199,3 @@ export const HIRE = [
   { label: 'Relocation', value: 'Open to relocation' },
   { label: 'Availability', value: 'Open to opportunities' },
 ];
-// "Currently building" card in the About section. Edit freely.
-export const NOW = {
-  title: 'Clinic System',
-  text: 'A new .NET + Angular project built on the same Clean Architecture structure as TMS, from setup through unit tests.',
-  href: 'https://github.com/kaluabiyu-wq/Clinic-system',
-};

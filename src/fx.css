@@ -144,24 +144,12 @@
   .aurora i,.photo .halo,.orb .skill-badge,.photo .frame{animation:none}
 }
 
-/* ---- now-building card, local clock, GitHub repos, project mock thumbnails ---- */
-a.fact.now{border-style:dashed;border-color:var(--accent)}
-a.fact.now small.c2{white-space:normal;line-height:1.5;margin:2px 0 4px}
+/* ---- local clock, quick-contact card, "How I build", project mock thumbnails ---- */
 .clock{display:inline-flex;gap:12px;align-items:center;margin-top:18px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
 .clock b{font-size:20px}.clock span{color:var(--muted);font-size:14px}
 .clock small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .dotlive{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
 .dotlive.on{background:var(--green);animation:pulse 2s ease-out infinite}
-
-.repos-wrap{margin-top:56px}
-.repos-title{font-size:18px;font-weight:700}
-.repos-title small{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--muted);margin-left:8px}
-.repos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
-.repo{display:block;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--card);transition:transform .25s,border-color .25s}
-.repo:hover{transform:translateY(-4px);border-color:var(--accent)}
-.repo b{font-family:var(--mono);font-size:14px;color:var(--accent-text)}
-.repo p{font-size:13px;color:var(--muted);margin:6px 0 12px}
-.repo small{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted)}
 
 .thumb .mock{position:absolute;inset:0;display:flex;flex-direction:column}
 .mock .bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:rgba(255,255,255,.08)}
@@ -174,3 +162,35 @@ a.fact.now small.c2{white-space:normal;line-height:1.5;margin:2px 0 4px}
 .mock .body s{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.14);text-decoration:none}
 .mock .body s:nth-of-type(1){width:70%}.mock .body s:nth-of-type(2){width:50%}.mock .body s:nth-of-type(3){width:62%}
 .thumb .badge{z-index:1}
+
+/* quick-contact card (About) */
+.quick{position:relative;padding:20px;border:1px dashed var(--accent);border-radius:14px;background:var(--card);overflow:hidden}
+.quick::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--accent),#7fb4ff)}
+.quick .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--accent-text)}
+.quick h4{font-size:18px;margin:8px 0 12px}
+.copybtn{display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;
+  border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--text);font:inherit;cursor:pointer;
+  transition:border-color .2s,transform .2s}
+.copybtn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.copybtn .addr{font-family:var(--mono);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copybtn .state{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);flex:none}
+.copybtn .state.ok{color:var(--green);border-color:var(--green)}
+.sr-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.qrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.qsoc{display:inline-flex;gap:8px;margin-left:auto}
+.qsoc a{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line);border-radius:10px;color:var(--muted);transition:color .2s,border-color .2s,transform .2s}
+.qsoc a:hover{color:var(--accent-text);border-color:var(--accent);transform:translateY(-2px)}
+
+/* "How I build" (Projects) */
+.practices-wrap{margin-top:56px}
+.practices-title{font-size:18px;font-weight:700}
+.practices-title small{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--muted);margin-left:8px}
+.practices{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:16px}
+.practice{display:flex;flex-direction:column;width:100%;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--card);
+  transition:transform .25s,border-color .25s,box-shadow .25s}
+.practice:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 14px 30px -16px rgba(27,42,65,.3)}
+.practice .ic{width:42px;height:42px;display:grid;place-items:center;font-size:20px;border-radius:10px;background:var(--bg2);margin-bottom:12px}
+.practice h4{font-size:16px;margin:0 0 6px}
+.practice p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 14px;flex:1}
+.practice button{align-self:flex-start;background:none;border:0;padding:0;font:inherit;font-family:var(--mono);font-size:12px;color:var(--accent-text);cursor:pointer}
+.practice button:hover{text-decoration:underline}

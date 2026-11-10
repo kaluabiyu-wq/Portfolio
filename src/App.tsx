@@ -1,5 +1,6 @@
 import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, NOW, type Project } from './data';
+import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
+import { QuickContact, HowIBuild } from './extras';
 import { Reveal, useTilt, useParallax, CountUp, ScrollProgress, CursorGlow, LocalTime } from './fx';
 type Theme = 'light' | 'dark';
 
@@ -37,42 +38,6 @@ function useActiveSection(ids: string[]) {
     return () => io.disconnect();
   }, [ids]);
   return active;
-}
-
-interface Repo {
-  name: string; description: string | null; language: string | null;
-  pushed_at: string; html_url: string; stargazers_count: number;
-}
-
-/** Latest non-fork repos from the public GitHub API. Cached for an hour per tab; fails silently. */
-function useRecentRepos(user: string) {
-  const [repos, setRepos] = useState<Repo[]>([]);
-  useEffect(() => {
-    const key = `gh-repos:${user}`;
-    try {
-      const hit = sessionStorage.getItem(key);
-      if (hit) {
-        const { t, d } = JSON.parse(hit) as { t: number; d: Repo[] };
-        if (Date.now() - t < 60 * 60 * 1000) { setRepos(d); return; }
-      }
-    } catch { /* storage unavailable or corrupt: fall through to fetch */ }
-    const ctl = new AbortController();
-    fetch(`https://api.github.com/users/${user}/repos?sort=pushed&per_page=12`, {
-      signal: ctl.signal, headers: { Accept: 'application/vnd.github+json' },
-    })
-      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json() as Promise<(Repo & { fork: boolean })[]>; })
-      .then(all => {
-        const top = all.filter(r => !r.fork).slice(0, 6).map(r => ({
-          name: r.name, description: r.description, language: r.language,
-          pushed_at: r.pushed_at, html_url: r.html_url, stargazers_count: r.stargazers_count,
-        }));
-        setRepos(top);
-        try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), d: top })); } catch { /* ignore */ }
-      })
-      .catch(() => { /* rate-limited or offline: the panel simply stays hidden */ });
-    return () => ctl.abort();
-  }, [user]);
-  return repos;
 }
 
 /* ---------- shareable case-study links (#case/<slug>) ---------- */
@@ -114,15 +79,6 @@ function useCaseRoute() {
   }, [open]);
 
   return [open, setOpen] as const;
-}
-
-function timeAgo(iso: string) {
-  const days = (Date.parse(iso) - Date.now()) / 86_400_000;
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  if (Math.abs(days) < 1) return 'today';
-  if (Math.abs(days) < 30) return rtf.format(Math.round(days), 'day');
-  if (Math.abs(days) < 365) return rtf.format(Math.round(days / 30), 'month');
-  return rtf.format(Math.round(days / 365), 'year');
 }
 
 /* ---------- components ---------- */
@@ -208,16 +164,7 @@ function About() {
           <p>I'm actively looking for a junior fullstack role where I can contribute to a real product from day one.</p>
         </Reveal>
         <div className="facts">
-          <Reveal from="right">
-            <a className="fact now" href={NOW.href} target="_blank" rel="noreferrer">
-              <div className="ic" aria-hidden="true">🔨</div>
-              <div>
-                <h4>Currently building: {NOW.title}</h4>
-                <small className="c2">{NOW.text}</small>
-                <small>View on GitHub ↗</small>
-              </div>
-            </a>
-          </Reveal>
+          <Reveal from="right"><QuickContact /></Reveal>
           {FACTS.map((f, i) => (
             <Reveal key={f.title} delay={i * 120} from="right">
               <div className="fact">
@@ -301,27 +248,6 @@ function ProjectCard({ p, onOpen }: { p: Project; onOpen: () => void }) {
   );
 }
 
-/** Live "Latest on GitHub" strip from the public API; hidden if offline or rate-limited. */
-function RecentRepos() {
-  const repos = useRecentRepos(PROFILE.githubUser);
-  const shown = repos.filter(r => !PROJECTS.some(p => p.github.toLowerCase().endsWith(`/${r.name.toLowerCase()}`))).slice(0, 3);
-  if (shown.length === 0) return null;
-  return (
-    <Reveal className="repos-wrap">
-      <h3 className="repos-title">Latest on GitHub <small>live from my profile</small></h3>
-      <div className="repos">
-        {shown.map(r => (
-          <a key={r.name} className="repo" href={r.html_url} target="_blank" rel="noreferrer">
-            <b>{r.name}</b>
-            <p>{r.description ?? 'No description yet.'}</p>
-            <small>{r.language && <span>● {r.language}</span>}<span>Updated {timeAgo(r.pushed_at)}</span>{r.stargazers_count > 0 && <span>★ {r.stargazers_count}</span>}</small>
-          </a>
-        ))}
-      </div>
-    </Reveal>
-  );
-}
-
 const FILTERS = ['All', 'Fullstack', 'Mobile', 'Team'] as const;
 type Filter = (typeof FILTERS)[number];
 const matchesFilter = (p: Project, f: Filter) =>
@@ -348,7 +274,7 @@ function Projects({ open, setOpen }: { open: Project | null; setOpen: (p: Projec
         </div>
         <div className="grid3">{shown.map((p, i) => <Reveal key={p.title} delay={i * 90} className="cell"><ProjectCard p={p} onOpen={() => setOpen(p)} /></Reveal>)}</div>
         {open && <CaseStudy p={open} onClose={() => setOpen(null)} />}
-        <RecentRepos />
+        <HowIBuild onOpen={setOpen} />
       </div>
     </section>
   );
