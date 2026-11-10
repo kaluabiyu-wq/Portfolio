@@ -1,7 +1,11 @@
-import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { PROFILE, HIRE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
-import { QuickContact, HowIBuild } from './extras';
-import { Reveal, useTilt, useParallax, CountUp, ScrollProgress, CursorGlow, LocalTime } from './fx';
+import { type CSSProperties, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { PROFILE, NAV, FACTS, PROJECTS, SKILLS, SKILL_ICONS, TIMELINE, SOCIALS, type Project } from './data';
+import { QuickContact, HireCv } from './extras';
+import { ContactForm } from './contact';
+import { ArchExplorer, StudyList } from './engineering';
+import { archFor, studiesFor } from './engineeringData';
+import { QuickView } from './quickview';
+import { Reveal, useTilt, useParallax, ScrollProgress, CursorGlow } from './fx';
 type Theme = 'light' | 'dark';
 
 /* ---------- hooks ---------- */
@@ -40,15 +44,41 @@ function useActiveSection(ids: string[]) {
   return active;
 }
 
+/* ---------- recruiter quick-view (#recruiter) ---------- */
+const RECRUITER_HASH = '#recruiter';
+function useRecruiterMode() {
+  const [on, setOn] = useState(() => location.hash === RECRUITER_HASH);
+  useEffect(() => {
+    const sync = () => setOn(location.hash === RECRUITER_HASH);
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  const enter = useCallback(() => { location.hash = RECRUITER_HASH.slice(1); }, []);
+  const exit = useCallback(() => {
+    // pushState (not hash = '') so Back returns to the quick view and no stray '#' is left behind.
+    if (location.hash === RECRUITER_HASH) history.pushState(null, '', location.pathname + location.search);
+    setOn(false);
+    window.scrollTo(0, 0);
+  }, []);
+  return [on, enter, exit] as const;
+}
+
 /* ---------- shareable case-study links (#case/<slug>) ---------- */
 const CASE_PREFIX = '#case/';
 const projectSlug = (p: Project) => p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const caseUrl = (p: Project) => `${location.origin}${location.pathname}${CASE_PREFIX}${projectSlug(p)}`;
+type CaseTab = 'overview' | 'architecture' | 'engineering';
+const TABS: CaseTab[] = ['overview', 'architecture', 'engineering'];
+const caseHash = (p: Project, tab: CaseTab = 'overview') => `${CASE_PREFIX}${projectSlug(p)}${tab === 'overview' ? '' : `/${tab}`}`;
+const caseUrl = (p: Project, tab: CaseTab = 'overview') => `${location.origin}${location.pathname}${caseHash(p, tab)}`;
+const tabFromHash = (): CaseTab => {
+  const t = location.hash.startsWith(CASE_PREFIX) ? location.hash.slice(CASE_PREFIX.length).split('/')[1] : '';
+  return (TABS as string[]).includes(t) ? (t as CaseTab) : 'overview';
+};
 
 function projectFromHash(): Project | null {
   if (!location.hash.startsWith(CASE_PREFIX)) return null;
   try {
-    const slug = decodeURIComponent(location.hash.slice(CASE_PREFIX.length));
+    const slug = decodeURIComponent(location.hash.slice(CASE_PREFIX.length).split('/')[0]);
     return PROJECTS.find(p => projectSlug(p) === slug) ?? null;
   } catch { return null; } // malformed %-escape in a hand-edited URL
 }
@@ -86,7 +116,7 @@ const SECTION_IDS = NAV.map(n => n.toLowerCase());
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent);
 
-function Navbar({ theme, toggleTheme, onSearch }: { theme: Theme; toggleTheme: () => void; onSearch: () => void }) {
+function Navbar({ theme, toggleTheme, onSearch, onRecruiter }: { theme: Theme; toggleTheme: () => void; onSearch: () => void; onRecruiter: () => void }) {
   const [open, setOpen] = useState(false);
   const active = useActiveSection(SECTION_IDS);
   return (
@@ -102,6 +132,7 @@ function Navbar({ theme, toggleTheme, onSearch }: { theme: Theme; toggleTheme: (
           <button type="button" className="kbd-btn" onClick={onSearch} aria-label="Search and quick actions" aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}>
             <span aria-hidden="true">⌕</span><kbd>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
+          <button type="button" className="rv-btn" onClick={onRecruiter}>Quick view</button>
           <a className="resume" href={PROFILE.cv} download>Resume</a>
           <button id="theme" onClick={toggleTheme} aria-label="Toggle theme">{theme === 'dark' ? '☀' : '☾'}</button>
           <button className="menu" onClick={() => setOpen(o => !o)} aria-label="Menu">☰</button>
@@ -132,6 +163,7 @@ function Hero() {
           <div className="btns">
             <a className="btn p" href="#projects">View Projects</a>
             <a className="btn g" href="#contact">Contact Me</a>
+            <a className="btn g" href="#recruiter">Recruiter quick view</a>
           </div>
         </div>
         <div className="photo" ref={stage}>
@@ -186,31 +218,80 @@ function About() {
 function CaseStudy({ p, onClose }: { p: Project; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [copied, setCopied] = useState(false);
+  const arch = archFor(p.short);
+  const studies = studiesFor(p.short);
+  const available = TABS.filter(t => t === 'overview' || (t === 'architecture' ? !!arch : studies.length > 0));
+  const [tab, setTabState] = useState<CaseTab>(() => { const t = tabFromHash(); return available.includes(t) ? t : 'overview'; });
+  const [openNote, setOpenNote] = useState<string | null>(null);
+  const uid = useId();
   useEffect(() => { ref.current?.showModal(); }, []);
+
+  const setTab = (t: CaseTab) => {
+    setTabState(t);
+    history.replaceState(null, '', caseHash(p, t));
+  };
+  const openStudy = (id: string) => {
+    setTab('engineering'); setOpenNote(id);
+    requestAnimationFrame(() => document.getElementById(`eng-${id}`)?.scrollIntoView({ block: 'nearest' }));
+  };
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(caseUrl(p));
+      await navigator.clipboard.writeText(caseUrl(p, tab));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      window.prompt('Copy this link:', caseUrl(p));
+      window.prompt('Copy this link:', caseUrl(p, tab));
     }
   };
-  const list = (title: string, items?: string[]) =>
-    items && items.length > 0 && (<><h4>{title}</h4><ul>{items.map(i => <li key={i}>{i}</li>)}</ul></>);
+  const label: Record<CaseTab, string> = { overview: 'Overview', architecture: 'Architecture', engineering: `Engineering notes (${studies.length})` };
+  const onTabKey = (e: KeyboardEvent) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const i = available.indexOf(tab);
+    setTab(available[(i + (e.key === 'ArrowRight' ? 1 : available.length - 1)) % available.length]);
+  };
   return (
-    <dialog ref={ref} className="case" aria-labelledby="case-title" onClose={onClose}
+    <dialog ref={ref} className="case wide" aria-labelledby="case-title" onClose={onClose}
       onClick={e => { if (e.target === ref.current) onClose(); }}>
       <button className="x" onClick={onClose} aria-label="Close case study">✕</button>
       <div className="tag">CASE STUDY · {p.badge}</div>
       <h3 id="case-title">{p.title}</h3>
-      <h4>The problem</h4><p>{p.problem}</p>
-      <h4>My role</h4><p>{p.role}</p>
-      {list('Key decisions', p.decisions)}
-      {list('Challenges', p.challenges)}
-      {list('Results', p.results)}
-      <h4>Stack</h4>
-      <div className="chips">{p.tech.map(t => <span key={t}>{t}</span>)}</div>
+
+      {available.length > 1 && (
+        <div className="case-tabs" role="tablist" aria-label="Case study sections" onKeyDown={onTabKey}>
+          {available.map(t => (
+            <button key={t} type="button" role="tab" id={`${uid}-${t}`} aria-selected={tab === t} aria-controls={`${uid}-panel`}
+              tabIndex={tab === t ? 0 : -1} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>{label[t]}</button>
+          ))}
+        </div>
+      )}
+
+      <div role="tabpanel" id={`${uid}-panel`} aria-labelledby={`${uid}-${tab}`}>
+        {tab === 'overview' && (
+          <>
+            <h4>The problem</h4><p>{p.problem}</p>
+            <h4>My role</h4><p>{p.role}</p>
+            {p.results && p.results.length > 0 && (<><h4>Results</h4><ul>{p.results.map(i => <li key={i}>{i}</li>)}</ul></>)}
+            {p.challenges && p.challenges.length > 0 && (<><h4>Challenges</h4><ul>{p.challenges.map(i => <li key={i}>{i}</li>)}</ul></>)}
+            <details className="more"><summary>Key decisions ({p.decisions.length})</summary><ul>{p.decisions.map(i => <li key={i}>{i}</li>)}</ul></details>
+            <h4>Stack</h4>
+            <div className="chips">{p.tech.map(t => <span key={t}>{t}</span>)}</div>
+          </>
+        )}
+        {tab === 'architecture' && arch && (
+          <>
+            <p className="case-sum">{arch.summary} Click a component, or trace a request step by step.</p>
+            <ArchExplorer key={arch.key} arch={arch} onStudy={openStudy} />
+          </>
+        )}
+        {tab === 'engineering' && (
+          <>
+            <p className="case-sum">The decisions above, explained one level down: what the mechanism is, and where it stops being the right answer.</p>
+            <StudyList studies={studies} openId={openNote} setOpenId={setOpenNote} />
+          </>
+        )}
+      </div>
+
       <div className="btns">
         {p.demo && <a className="btn p" href={p.demo} target="_blank" rel="noreferrer">Live demo ↗</a>}
         <a className="btn g" href={p.github} target="_blank" rel="noreferrer">Source code ↗</a>
@@ -237,6 +318,9 @@ function ProjectCard({ p, onOpen }: { p: Project; onOpen: () => void }) {
         <h3>{p.title}</h3>
         <p>{p.desc}</p>
         <small className="role-line">{p.role}</small>
+        {(archFor(p.short) || studiesFor(p.short).length > 0) && (
+          <small className="deep">{[archFor(p.short) && 'Architecture diagram', studiesFor(p.short).length > 0 && `${studiesFor(p.short).length} engineering note${studiesFor(p.short).length > 1 ? 's' : ''}`].filter(Boolean).join(' · ')}</small>
+        )}
         <div className="chips">{p.tech.map(t => <span key={t}>{t}</span>)}</div>
         <div className="prow">
           <button className="btn" onClick={onOpen}>Case study</button>
@@ -264,7 +348,7 @@ function Projects({ open, setOpen }: { open: Project | null; setOpen: (p: Projec
         <Reveal>
           <div className="tag">PROJECTS</div>
           <h2>Real systems, real architecture.</h2>
-          <p className="lead">Selected full-stack and cross-platform applications built with thoughtful architecture. Open a case study to see the problem, my role, and the decisions behind each one.</p>
+          <p className="lead">Selected full-stack and cross-platform applications built with thoughtful architecture. Open a project for its problem and results, an interactive architecture diagram, and short engineering notes on the decisions behind it.</p>
         </Reveal>
         <div className="filters" role="group" aria-label="Filter projects">
           {FILTERS.map(f => (
@@ -274,7 +358,6 @@ function Projects({ open, setOpen }: { open: Project | null; setOpen: (p: Projec
         </div>
         <div className="grid3">{shown.map((p, i) => <Reveal key={p.title} delay={i * 90} className="cell"><ProjectCard p={p} onOpen={() => setOpen(p)} /></Reveal>)}</div>
         {open && <CaseStudy p={open} onClose={() => setOpen(null)} />}
-        <HowIBuild onOpen={setOpen} />
       </div>
     </section>
   );
@@ -329,36 +412,6 @@ function Skills() {
   );
 }
 
-function Hire() {
-  const stats = [
-    { n: PROJECTS.length, label: 'Projects built' },
-    { n: TIMELINE.filter(t => t.kind.startsWith('Certification')).length, label: 'Certifications earned' },
-    { n: new Set(SKILLS.flatMap(s => s.items)).size, label: 'Technologies in my stack' },
-  ];
-  return (
-    <section id="hire" className="alt">
-      <div className="wrap hire">
-        <div>
-          <div className="tag">HIRE ME</div>
-          <h2>What I'm looking for.</h2>
-          <p className="lead">The quick facts recruiters and hiring managers ask for first.</p>
-          <LocalTime zone="Africa/Addis_Ababa" city="Addis Ababa" utcOffsetMin={180} />
-          <dl className="looking">
-            {HIRE.map(h => <div key={h.label}><dt>{h.label}</dt><dd>{h.value}</dd></div>)}
-          </dl>
-          <div className="btns">
-            <a className="btn p" href="#contact">Start a conversation</a>
-            <a className="btn g" href={PROFILE.cv} download>Download CV</a>
-          </div>
-        </div>
-        <div className="stats">
-          {stats.map((x, i) => <Reveal key={x.label} delay={i * 120} from="right"><div className="stat"><CountUp to={x.n} /><span>{x.label}</span></div></Reveal>)}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function Education() {
   return (
     <section id="education">
@@ -381,53 +434,6 @@ function Education() {
         </div>
       </div>
     </section>
-  );
-}
-
-function ContactForm() {
-  const [f, setF] = useState({ name: '', email: '', subject: '', body: '' });
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-
-  const [sending, setSending] = useState(false);
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    const valid = f.name.trim() && f.body.trim() && /^\S+@\S+\.\S+$/.test(f.email.trim());
-    if (!valid) return setStatus({ ok: false, text: 'Enter your name, a valid email, and a message.' });
-    const subject = f.subject.trim() || `Portfolio enquiry from ${f.name}`;
-    setSending(true); setStatus(null);
-    try {
-      // Delivers the message straight to PROFILE.email via FormSubmit (no backend needed).
-      const res = await fetch(`https://formsubmit.co/ajax/${PROFILE.email}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ name: f.name, email: f.email, _replyto: f.email, _subject: subject, message: f.body, _template: 'table' }),
-      });
-      if (!res.ok) throw new Error('send failed');
-      setF({ name: '', email: '', subject: '', body: '' });
-      setStatus({ ok: true, text: 'Message sent. Thank you, I will reply to your email soon.' });
-    } catch {
-      const body = encodeURIComponent(`${f.body}\n\n— ${f.name} (${f.email})`);
-      window.location.href = `mailto:${PROFILE.email}?subject=${encodeURIComponent(subject)}&body=${body}`;
-      setStatus({ ok: false, text: 'Could not send directly, so your email app is opening instead.' });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <form onSubmit={submit} noValidate>
-      <h3>Send a message</h3>
-      <p className="sub">Tell me about the role, project, or idea you have in mind.</p>
-      <div className="row">
-        <label>Name<input value={f.name} onChange={set('name')} placeholder="Your name" /></label>
-        <label>Email<input type="email" value={f.email} onChange={set('email')} placeholder="you@example.com" /></label>
-      </div>
-      <label>Subject<input value={f.subject} onChange={set('subject')} placeholder="What would you like to discuss?" /></label>
-      <label>Message<textarea value={f.body} onChange={set('body')} placeholder="Share a few details..." /></label>
-      <button className="btn p" type="submit" disabled={sending}>{sending ? 'Sending…' : 'Send Message'}</button>
-      <div id="msg" role="status" style={{ color: status?.ok ? 'var(--green)' : 'var(--accent-text)' }}>{status?.text}</div>
-    </form>
   );
 }
 
@@ -549,6 +555,7 @@ export default function App() {
   const [theme, toggleTheme] = useTheme();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [caseOpen, setCaseOpen] = useCaseRoute();
+  const [recruiter, enterRecruiter, exitRecruiter] = useRecruiterMode();
 
   // Ctrl/Cmd+K toggles the palette from anywhere on the page.
   useEffect(() => {
@@ -573,6 +580,7 @@ export default function App() {
     return [
       ...NAV.map(n => ({ id: `go-${n}`, group: 'Go to', label: n, hint: `#${n.toLowerCase()}`, run: () => { location.hash = n.toLowerCase(); } })),
       ...PROJECTS.map(p => ({ id: `proj-${p.title}`, group: 'Case studies', label: p.title, hint: p.badge, keywords: `${p.short} ${p.tech.join(' ')}`, run: () => setCaseOpen(p) })),
+      { id: 'recruiter', group: 'Actions', label: 'Recruiter quick view', hint: '#recruiter', keywords: 'recruiter summary hiring overview accessible', run: enterRecruiter },
       { id: 'cv', group: 'Actions', label: 'Download CV', hint: 'PDF', keywords: 'resume', run: downloadCv },
       { id: 'mail', group: 'Actions', label: 'Send an email', hint: PROFILE.email, keywords: 'contact hire', run: () => { location.href = `mailto:${PROFILE.email}`; } },
       { id: 'copy', group: 'Actions', label: 'Copy email address', run: copyEmail },
@@ -580,21 +588,36 @@ export default function App() {
       { id: 'gh', group: 'Links', label: 'GitHub', hint: '↗', run: open(social('GitHub')) },
       { id: 'li', group: 'Links', label: 'LinkedIn', hint: '↗', run: open(social('LinkedIn')) },
     ];
-  }, [theme, toggleTheme, setCaseOpen]);
+  }, [theme, toggleTheme, setCaseOpen, enterRecruiter]);
+
+  useEffect(() => {
+    document.documentElement.dataset.mode = recruiter ? 'recruiter' : 'full';
+    return () => { delete document.documentElement.dataset.mode; };
+  }, [recruiter]);
+
+  if (recruiter) {
+    return (
+      <>
+        <a className="skip" href="#main">Skip to content</a>
+        <QuickView theme={theme} toggleTheme={toggleTheme} onExit={exitRecruiter}
+          onOpenCase={p => { exitRecruiter(); setCaseOpen(p); }} />
+      </>
+    );
+  }
 
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
       <ScrollProgress />
       <CursorGlow />
-      <Navbar theme={theme} toggleTheme={toggleTheme} onSearch={() => setPaletteOpen(true)} />
+      <Navbar theme={theme} toggleTheme={toggleTheme} onSearch={() => setPaletteOpen(true)} onRecruiter={enterRecruiter} />
       <Hero />
       <Marquee />
       <main id="main">
         <About />
         <Projects open={caseOpen} setOpen={setCaseOpen} />
         <Skills />
-        <Hire />
+        <HireCv />
         <Education />
         <Contact />
       </main>

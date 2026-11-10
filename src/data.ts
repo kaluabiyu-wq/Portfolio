@@ -4,10 +4,11 @@ export const PROFILE = {
   email: 'kaluabiyu@gmail.com',
   githubUser: 'kaluabiyu-wq',
   cv: '/Kalu_Abiyu_CV1.pdf',
+  cvPreview: '/cv-preview.webp', // regenerate with scripts/cv-preview.sh after replacing the PDF
   photo: '/kalu.JPG', 
 };
 
-export const NAV = ['About', 'Projects', 'Skills', 'Hire','Education', 'Contact'];
+export const NAV = ['About', 'Projects', 'Skills', 'Hire', 'Education', 'Contact'];
 
 export const FACTS = [
   { icon: '🎓', title: 'BSc Computer Science', a: 'Admas University', b: 'Computer Science · 2022–2026', accent: false },
@@ -191,11 +192,23 @@ export const SOCIALS = [
  { label: 'Email', href: 'mailto:kaluabiyu@gmail.com', d: 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z' },
 ];
 
-// "What I'm looking for" rows. Edit the values to match your situation.
-export const HIRE = [
-  { label: 'Role', value: 'Fullstack Developer (.NET + Angular)' },
-  { label: 'Work mode', value: 'Remote · Hybrid · Onsite' },
-  { label: 'Location', value: 'Addis Ababa, Ethiopia (UTC+3)' },
-  { label: 'Relocation', value: 'Open to relocation' },
-  { label: 'Availability', value: 'Open to opportunities' },
+// Hire section + CV: one list, no repeated facts. group "looking" also feeds the Recruiter Quick-View.
+// Keep in step with the CV itself (public/Kalu_Abiyu_CV1.pdf).
+export const HIRE_FACTS: { group: 'looking' | 'background'; label: string; value: string }[] = [
+  { group: 'looking', label: 'Role', value: 'Junior Fullstack Developer (.NET + Angular)' },
+  { group: 'looking', label: 'Availability', value: 'Available immediately' },
+  { group: 'looking', label: 'Work mode', value: 'Remote, hybrid or onsite · open to relocation' },
+  { group: 'looking', label: 'Location', value: 'Addis Ababa, Ethiopia (UTC+3)' },
+  { group: 'background', label: 'Degree', value: 'BSc Computer Science, Admas University (Mar 2026), GPA 3.63, Great Distinction' },
+  { group: 'background', label: 'Training', value: 'Qiyas Fullstack Development Training (May – Sep 2026)' },
+  { group: 'background', label: 'Core stack', value: 'C# / .NET 10, ASP.NET Core, EF Core, PostgreSQL, Angular, TypeScript' },
 ];
+
+// One-sentence summaries for the Recruiter Quick-View, keyed by Project.short.
+export const ONE_LINERS: Record<string, string> = {
+  TMS: 'Training scheduling and enrollment platform: ASP.NET Core 10 API with Clean Architecture and CQRS, JWT auth, SignalR notifications and a zoneless Angular client, covered by xUnit, Vitest and Playwright tests.',
+  PMAFS: 'Location-aware platform that shows patients in Addis Ababa which pharmacies have a medicine in stock, nearest first, with role-based access for five kinds of user.',
+  Shop: 'E-commerce app for Ethiopian clothing on ASP.NET Core 8 and React 18, with concurrency-safe stock handling, order history and an admin area.',
+  'Mini-Market': 'Flutter shopping app with BLoC state management, category browsing, favorites and a quantity-based cart on mobile, desktop and web.',
+  SkillBridge: 'Hackathon job marketplace built by a team of six; I was a backend developer on authentication, authorization and API design.',
+};

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { PROFILE, PROJECTS, SOCIALS, type Project } from './data';
-import { Reveal } from './fx';
+import { PROFILE, SOCIALS, HIRE_FACTS } from './data';
+import { Reveal, LocalTime } from './fx';
 
 /** Quick-contact card for the About section: one-tap copy of the email, CV download and key profiles. */
 export function QuickContact() {
@@ -48,37 +48,43 @@ export function QuickContact() {
   );
 }
 
-const PRACTICES: { icon: string; title: string; text: string; seen: string }[] = [
-  { icon: '🏛️', title: 'Clean architecture', seen: 'TMS',
-    text: 'Domain rules stay independent of the UI and database. CQRS with MediatR keeps every use case small, separate and easy to test.' },
-  { icon: '🔐', title: 'Secure by default', seen: 'TMS',
-    text: 'JWT with refresh-token rotation, resource-based policies, login rate limiting and security-headers middleware.' },
-  { icon: '🧪', title: 'Tested end to end', seen: 'TMS',
-    text: 'xUnit integration and unit tests on the API, Vitest specs on the client, and Playwright E2E for happy and failure paths.' },
-  { icon: '⚡', title: 'Fast and live', seen: 'TMS',
-    text: 'HybridCache with tag-based invalidation for hot data, and SignalR to push updates instead of asking users to refresh.' },
-];
-
-/** "How I build" strip: engineering habits taken from the case studies, each linking to the project that shows it. */
-export function HowIBuild({ onOpen }: { onOpen: (p: Project) => void }) {
+/** Hire + CV in one section: the facts recruiters ask for first, next to a one-page CV preview they can open or download. */
+export function HireCv() {
+  const [missing, setMissing] = useState(false);
+  const group = (g: 'looking' | 'background') => HIRE_FACTS.filter(f => f.group === g);
+  const rows = (g: 'looking' | 'background') => (
+    <dl className="looking">{group(g).map(f => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}</dl>
+  );
   return (
-    <Reveal className="practices-wrap">
-      <h3 className="practices-title">How I build <small>habits you'll find in my code</small></h3>
-      <div className="practices">
-        {PRACTICES.map((p, i) => {
-          const proj = PROJECTS.find(x => x.short === p.seen);
-          return (
-            <Reveal key={p.title} delay={i * 90} from="zoom" className="cell">
-              <div className="practice">
-                <div className="ic" aria-hidden="true">{p.icon}</div>
-                <h4>{p.title}</h4>
-                <p>{p.text}</p>
-                {proj && <button type="button" onClick={() => onOpen(proj)}>See it in {p.seen} →</button>}
+    <section id="hire" className="alt">
+      <div className="wrap">
+        <Reveal>
+          <div className="tag">HIRE ME</div>
+          <h2>What I'm looking for, and my CV.</h2>
+          <LocalTime zone="Africa/Addis_Ababa" city="Addis Ababa" utcOffsetMin={180} />
+        </Reveal>
+        <div className="cvgrid">
+          <Reveal from="left">
+            <div className="cvside">
+              {rows('looking')}
+              <h3 className="lgroup">Background</h3>
+              {rows('background')}
+              <div className="btns">
+                <a className="btn p" href="#contact">Start a conversation</a>
+                <a className="btn g" href={PROFILE.cv} download>Download CV (PDF)</a>
               </div>
-            </Reveal>
-          );
-        })}
+            </div>
+          </Reveal>
+          <Reveal from="right">
+            <a id="cv" className="cvpage" href={PROFILE.cv} target="_blank" rel="noreferrer" aria-label="Open the full CV as a PDF in a new tab">
+              {missing
+                ? <span className="cvfallback">CV preview unavailable. Open the PDF instead.</span>
+                : <img src={PROFILE.cvPreview} alt={`First page of ${PROFILE.name}'s CV: profile, projects, education and skills`} width="1075" height="1521" loading="lazy" onError={() => setMissing(true)} />}
+              <span className="cvhint" aria-hidden="true">Click to open full size ↗</span>
+            </a>
+          </Reveal>
+        </div>
       </div>
-    </Reveal>
+    </section>
   );
 }
