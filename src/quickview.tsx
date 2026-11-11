@@ -33,7 +33,7 @@ export function QuickView({ theme, toggleTheme, onExit, onOpenCase }: {
       <main id="main" className="qv-main">
         <header className="qv-head">
           <h1 ref={h1} tabIndex={-1}>{PROFILE.name}</h1>
-          <p className="qv-role">Fullstack .NET + Angular developer · Addis Ababa, Ethiopia (UTC+3)</p>
+          <p className="qv-role">Fullstack developer · Addis Ababa, Ethiopia (UTC+3)</p>
           <p className="qv-status">Open to junior fullstack roles. Available immediately for remote, hybrid or onsite work.</p>
           <div className="qv-actions">
             <a className="btn p" href={PROFILE.cv} download>Download CV (PDF)</a>
