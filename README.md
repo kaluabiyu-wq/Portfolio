@@ -8,12 +8,12 @@ components.
 
 ## Screenshots
 
-![Hero section with animated aurora background](public/screen 1.png)
-![Projects section with 3D-tilt cards](public/screen 2.png)
-![Case-study modal](public/screen 3.png)
-![Hire and CV section](public/screen 4.png)
-![Recruiter quick view](public/screen 5.png)
-![Contact form](public/screen 6.png)
+![Hero section with animated aurora background](public/screen-1.JPG)
+![Projects section with 3D-tilt cards](public/screen-2.JPG)
+![Case-study modal](public/screen-3.JPG)
+![Hire and CV section](public/screen-4.JPG)
+![Recruiter quick view](public/screen-5.JPG)
+![Contact form](public/screen-6.JPG)
 
 ## Features
 Animated 2D hero (aurora background, rotating halo ring, floating tech badges that follow the mouse),
