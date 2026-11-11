@@ -6,7 +6,14 @@ components.
 
 **Live site:**  http://localhost:5173/
 
-![Screenshot of the portfolio](public/projects/portfolio-home.webp)
+## Screenshots
+
+![Hero section with animated aurora background](public/screen 1.png)
+![Projects section with 3D-tilt cards](public/screen 2.png)
+![Case-study modal](public/screen 3.png)
+![Hire and CV section](public/screen 4.png)
+![Recruiter quick view](public/screen 5.png)
+![Contact form](public/screen 6.png)
 
 ## Features
 Animated 2D hero (aurora background, rotating halo ring, floating tech badges that follow the mouse),
